@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
         body { background-color: #f4f6f9; font-family: system-ui, -apple-system, sans-serif; }
-        #reader { width: 100%; max-width: 450px; margin: auto; border-radius: 12px; overflow: hidden; }
+        #reader { width: 100%; max-width: 500px; margin: auto; border-radius: 12px; overflow: hidden; }
         .barcode-container { text-align: center; margin-bottom: 15px; }
         .status-badge { font-size: 0.9rem; padding: 6px 12px; }
     </style>
@@ -43,16 +43,18 @@
         
         <h5 class="text-primary border-bottom pb-2">تفاصيل الأصل</h5>
         <div id="assetDetails"></div>
+        <button onclick="restartScanner()" class="btn btn-outline-primary mt-3 w-100">مسح كود آخر</button>
     </div>
 </div>
 
 <script>
-    // ⚠️ ضع رابط Web App الخاص بـ Google Apps Script الذي ينتهي بـ /exec هنا
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYBvXPSzfHifbPATuPifxJEtBLLqin8adHznx1DIrtRGGLyVT-tOYhMFjEhE624fMB/exec';
+    // ⚠️ استبدل هذا الرابط برابط Web App الخاص بك من Google Apps Script (الذي ينتهي بـ /exec)
+    const APPS_SCRIPT_URL = 'ضع_رابط_WEB_APP_هنا';
 
     let excelData = [];
+    let html5QrCode = null;
 
-    // جلب البيانات تلقائياً بمجرد فتح التطبيق
+    // جلب البيانات تلقائياً عند فتح الصفحة
     window.addEventListener('DOMContentLoaded', () => {
         loadDataFromAppsScript();
     });
@@ -62,14 +64,11 @@
             .then(response => response.json())
             .then(rawData => {
                 if (!rawData || rawData.length < 2) {
-                    showError("الجدول فارغ أو لا يحتوي على بيانات كافية.");
+                    showError("الجدول فارغ أو لا يحتوي على بيانات.");
                     return;
                 }
 
-                // العناوين المفتاحية (الصف الأول)
                 const headers = rawData[0];
-
-                // تحويل مصفوفة الصفوف إلى كائنات مفتاح وقيمة (Key-Value)
                 excelData = rawData.slice(1).map(row => {
                     let obj = {};
                     headers.forEach((header, index) => {
@@ -84,7 +83,7 @@
                 document.getElementById('startScanBtn').disabled = false;
             })
             .catch(err => {
-                showError("تعذر الاتصال بـ Google Sheets. التأكد من رابط Web App وصلاحية (Anyone).");
+                showError("تعذر الاتصال بـ Google Sheets. يرجى التأكد من رابط Web App وصلاحية (Anyone).");
             });
     }
 
@@ -94,21 +93,48 @@
         statusDiv.innerHTML = msg;
     }
 
-    // تشغيل الكاميرا
+    // تشغيل الكاميرا وإعدادات المسح الحساسة
     document.getElementById('startScanBtn').addEventListener('click', function() {
-        const html5QrCode = new Html5Qrcode("reader");
+        startCamera();
+    });
+
+    function startCamera() {
+        html5QrCode = new Html5Qrcode("reader");
         
+        // إعدادات محسنة لالتقاط الباركود بسرعة وبجميع الأشكال
+        const config = { 
+            fps: 20, 
+            qrbox: { width: 320, height: 160 },
+            formatsToSupport: [ 
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.QR_CODE
+            ]
+        };
+
         html5QrCode.start(
             { facingMode: "environment" }, 
-            { fps: 15, qrbox: { width: 250, height: 120 } },
+            config,
             (decodedText) => {
-                findAndDisplayAsset(decodedText);
+                // إيقاف الكاميرا فور الالتقاط لعرض النتائج
+                html5QrCode.stop().then(() => {
+                    findAndDisplayAsset(decodedText);
+                }).catch(() => {
+                    findAndDisplayAsset(decodedText);
+                });
             },
             (err) => {}
         ).catch(err => alert("يرجى السماح باستخدام الكاميرا في المتصفح."));
-    });
+    }
 
-    // البحث عن الأصل المطلوب
+    // إمكانية إعادة المسح من جديد
+    function restartScanner() {
+        document.getElementById('resultCard').style.display = 'none';
+        startCamera();
+    }
+
+    // المطابقة والعرض
     function findAndDisplayAsset(code) {
         const cleanCode = code.replace(/\*/g, '').trim();
 
@@ -122,7 +148,6 @@
         const assetDetails = document.getElementById('assetDetails');
 
         if (asset) {
-            // رسم الباركود
             try {
                 JsBarcode("#barcodeCanvas", cleanCode, {
                     format: "CODE128",
