@@ -3,182 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام جرد الأصول والمستودع</title>
+    <title>ماسح الأصول والمستودع</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
         body { background-color: #f4f6f9; font-family: system-ui, -apple-system, sans-serif; }
-        #reader { width: 100%; max-width: 500px; margin: auto; border-radius: 12px; overflow: hidden; }
-        .barcode-container { text-align: center; margin-bottom: 15px; }
-        .status-badge { font-size: 0.9rem; padding: 6px 12px; }
+        #reader { width: 100%; max-width: 500px; margin: auto; border-radius: 12px; overflow: hidden; border: 3px solid #0d6efd; }
     </style>
 </head>
 <body>
 
 <div class="container py-4" style="max-width: 700px;">
-    <h3 class="text-center mb-3 text-primary">نظام جرد الأصول والمستودع</h3>
+    <h3 class="text-center mb-3 text-primary">ماسح جرد الأصول</h3>
 
-    <!-- حالة الاتصال -->
-    <div class="card p-3 mb-3 shadow-sm text-center">
-        <div id="connectionStatus" class="alert alert-info m-0">
-            جاري الاتصال بـ Google Sheets وتحديث البيانات...
-        </div>
+    <div class="card p-3 mb-3 text-center">
+        <div id="connectionStatus" class="alert alert-info m-0">جاري الاتصال بـ Google Sheets...</div>
     </div>
 
-    <!-- الكاميرا والمدخل اليدوي السريع -->
-    <div class="card p-3 mb-3 shadow-sm text-center">
+    <!-- الكاميرا تعمل تلقائياً للوجوه والمسح -->
+    <div class="card p-3 mb-3 text-center">
         <div id="reader"></div>
-        <button id="startScanBtn" class="btn btn-success mt-3" disabled>فتح الكاميرا ومسح الباركود</button>
-        
-        <hr class="my-3">
-        
-        <!-- خيار البحث اليدوي المباشر في حال تجربة النص من الشاشة -->
-        <div class="input-group">
-            <input type="text" id="manualCodeInput" class="form-control text-center" placeholder="أو أدخل الكود يدوياً هنا (مثال: DAR_J4Y8Z5J2I2)">
-            <button class="btn btn-primary" onclick="searchManualCode()">بحث</button>
-        </div>
+        <p class="text-muted mt-2 small">وجه الكاميرا مباشرة نحو الباركود المطبوع</p>
     </div>
 
-    <!-- عرض النتائج -->
     <div id="resultCard" class="card p-4 shadow-sm" style="display: none;">
-        <div class="barcode-container">
-            <svg id="barcodeCanvas"></svg>
-        </div>
+        <div class="text-center mb-3"><svg id="barcodeCanvas"></svg></div>
         <h5 class="text-primary border-bottom pb-2">تفاصيل الأصل</h5>
         <div id="assetDetails"></div>
-        <button onclick="restartScanner()" class="btn btn-outline-primary mt-3 w-100">مسح / بحث عن كود آخر</button>
+        <button onclick="restartCamera()" class="btn btn-success mt-3 w-100">مسح أصل آخر</button>
     </div>
 </div>
 
 <script>
-    // ⚠️ ضع رابط Web App الخاص بك من Google Apps Script هنا
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYBvXPSzfHifbPATuPifxJEtBLLqin8adHznx1DIrtRGGLyVT-tOYhMFjEhE624fMB/exec';
-
     let excelData = [];
     let html5QrCode = null;
 
     window.addEventListener('DOMContentLoaded', () => {
-        loadDataFromAppsScript();
-    });
-
-    function loadDataFromAppsScript() {
         fetch(APPS_SCRIPT_URL)
-            .then(response => response.json())
+            .then(res => res.json())
             .then(rawData => {
-                if (!rawData || rawData.length < 2) {
-                    showError("الجدول فارغ أو لا يحتوي على بيانات.");
-                    return;
-                }
-
                 const headers = rawData[0];
                 excelData = rawData.slice(1).map(row => {
                     let obj = {};
-                    headers.forEach((header, index) => {
-                        obj[header] = row[index];
-                    });
+                    headers.forEach((h, i) => obj[h] = row[i]);
                     return obj;
                 });
-
-                const statusDiv = document.getElementById('connectionStatus');
-                statusDiv.className = "alert alert-success m-0";
-                statusDiv.innerHTML = `تم الاتصال بنجاح بـ Google Sheets! تم تحميل <strong>${excelData.length}</strong> أصل جاهز للجرد.`;
-                document.getElementById('startScanBtn').disabled = false;
-            })
-            .catch(err => {
-                showError("تعذر الاتصال بـ Google Sheets.");
+                document.getElementById('connectionStatus').className = "alert alert-success m-0";
+                document.getElementById('connectionStatus').innerHTML = `جاهز! تم تحميل <strong>${excelData.length}</strong> أصل.`;
+                startScanner();
             });
-    }
-
-    function showError(msg) {
-        const statusDiv = document.getElementById('connectionStatus');
-        statusDiv.className = "alert alert-danger m-0";
-        statusDiv.innerHTML = msg;
-    }
-
-    // تشغيل الكاميرا
-    document.getElementById('startScanBtn').addEventListener('click', function() {
-        startCamera();
     });
 
-    function startCamera() {
+    function startScanner() {
         html5QrCode = new Html5Qrcode("reader");
-        
-        const config = { 
-            fps: 30,
-            qrbox: { width: 350, height: 180 }
-        };
-
         html5QrCode.start(
             { facingMode: "environment" }, 
-            config,
+            { fps: 30, qrbox: { width: 300, height: 150 } },
             (decodedText) => {
-                html5QrCode.stop().then(() => {
-                    findAndDisplayAsset(decodedText);
-                }).catch(() => {
-                    findAndDisplayAsset(decodedText);
-                });
+                html5QrCode.stop().then(() => findAndDisplayAsset(decodedText));
             },
             (err) => {}
-        ).catch(err => alert("يرجى السماح باستخدام الكاميرا."));
+        );
     }
 
-    function restartScanner() {
+    function restartCamera() {
         document.getElementById('resultCard').style.display = 'none';
-        document.getElementById('manualCodeInput').value = '';
+        startScanner();
     }
 
-    function searchManualCode() {
-        const inputVal = document.getElementById('manualCodeInput').value;
-        if (!inputVal) return;
-        findAndDisplayAsset(inputVal);
-    }
-
-    // دالة المطابقة والعرض الموحدة
     function findAndDisplayAsset(scannedCode) {
-        // تنظيف الكود تماماً من النجوم والرموز الزائدة
         const cleanScanned = String(scannedCode).replace(/[*]/g, '').trim().toUpperCase();
 
         const asset = excelData.find(row => {
-            const codeVal = String(row['Code'] || '').replace(/[*]/g, '').trim().toUpperCase();
-            const barcodeVal = String(row['Barcode'] || '').replace(/[*]/g, '').trim().toUpperCase();
-            
-            return codeVal === cleanScanned || barcodeVal === cleanScanned;
+            const c = String(row['Code'] || '').replace(/[*]/g, '').trim().toUpperCase();
+            const b = String(row['Barcode'] || '').replace(/[*]/g, '').trim().toUpperCase();
+            return c === cleanScanned || b === cleanScanned;
         });
 
-        const resultCard = document.getElementById('resultCard');
-        const assetDetails = document.getElementById('assetDetails');
-
         if (asset) {
-            try {
-                JsBarcode("#barcodeCanvas", cleanScanned, {
-                    format: "CODE128",
-                    lineColor: "#000",
-                    width: 2,
-                    height: 50,
-                    displayValue: true
-                });
-            } catch(e) {}
-
-            assetDetails.innerHTML = `
-                <table class="table table-bordered text-right mt-2">
-                    <tr><th class="bg-light" style="width:35%">الكود المرجعي:</th><td><strong>${asset['Code'] || '-'}</strong></td></tr>
-                    <tr><th class="bg-light">الوصف:</th><td>${asset['الوصف / Description'] || '-'}</td></tr>
-                    <tr><th class="bg-light">الوصف العام:</th><td>${asset['الوصف العام / Category'] || '-'}</td></tr>
-                    <tr><th class="bg-light">المصنع / Brand:</th><td>${asset['المصنع / Manufacturer / Brand'] || '-'}</td></tr>
-                    <tr><th class="bg-light">الموديل:</th><td>${asset['الموديل / Model'] || '-'}</td></tr>
-                    <tr><th class="bg-light">الرقم التسلسلي:</th><td>${asset['الرقم التسلسلي / Serial Number'] || '-'}</td></tr>
-                    <tr><th class="bg-light">الموقع والمكتب:</th><td>${asset['الموقع / Location'] || ''} - ${asset['مكتب / Office'] || ''}</td></tr>
-                    <tr><th class="bg-light">المستلم:</th><td>${asset['الاسم / Name'] || '-'} (${asset['القسم / department'] || ''})</td></tr>
-                    <tr><th class="bg-light">الحالة عند الفحص:</th><td><span class="badge bg-success status-badge">${asset['الحالة عند الفحص / Condition'] || '-'}</span></td></tr>
-                    <tr><th class="bg-light">ملاحظات:</th><td>${asset['ملاحظات / Comments'] || '-'}</td></tr>
-                </table>
-            `;
+            try { JsBarcode("#barcodeCanvas", cleanScanned, { format: "CODE128", width: 2, height: 40 }); } catch(e){}
+            document.getElementById('assetDetails').innerHTML = `
+                <table class="table table-bordered mt-2">
+                    <tr><th>الكود:</th><td><strong>${asset['Code'] || '-'}</strong></td></tr>
+                    <tr><th>الوصف:</th><td>${asset['الوصف / Description'] || '-'}</td></tr>
+                    <tr><th>التصنيف:</th><td>${asset['الوصف العام / Category'] || '-'}</td></tr>
+                    <tr><th>الماركة:</th><td>${asset['المصنع / Manufacturer / Brand'] || '-'}</td></tr>
+                    <tr><th>الموديل:</th><td>${asset['الموديل / Model'] || '-'}</td></tr>
+                    <tr><th>الرقم التسلسلي:</th><td>${asset['الرقم التسلسلي / Serial Number'] || '-'}</td></tr>
+                    <tr><th>الموقع:</th><td>${asset['الموقع / Location'] || ''} - ${asset['مكتب / Office'] || ''}</td></tr>
+                    <tr><th>المستلم:</th><td>${asset['الاسم / Name'] || '-'}</td></tr>
+                    <tr><th>الحالة:</th><td><span class="badge bg-success">${asset['الحالة عند الفحص / Condition'] || '-'}</span></td></tr>
+                </table>`;
         } else {
-            document.getElementById('barcodeCanvas').innerHTML = '';
-            assetDetails.innerHTML = `<div class="alert alert-danger">تم البحث عن الكود (<strong>${cleanScanned}</strong>)، ولكنه غير موجود في جدول الإكسل.</div>`;
+            document.getElementById('assetDetails').innerHTML = `<div class="alert alert-danger">الكود الممسوح (${cleanScanned}) غير موجود بالجدول.</div>`;
         }
-        resultCard.style.display = 'block';
+        document.getElementById('resultCard').style.display = 'block';
     }
 </script>
 </body>
