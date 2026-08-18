@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام جرد الأصول والمستودع</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Html5-QRCode لمسح الكود عبر الكاميرا -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <!-- JsBarcode لرسم الباركود -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
         body { background-color: #f4f6f9; font-family: system-ui, -apple-system, sans-serif; }
@@ -22,25 +19,21 @@
 <div class="container py-4" style="max-width: 700px;">
     <h3 class="text-center mb-3 text-primary">نظام جرد الأصول والمستودع</h3>
 
-    <!-- حالة الاتصال بـ Google Sheets -->
     <div class="card p-3 mb-3 shadow-sm text-center">
         <div id="connectionStatus" class="alert alert-info m-0">
             جاري الاتصال بـ Google Sheets وتحديث البيانات...
         </div>
     </div>
 
-    <!-- الكاميرا وزر المسح -->
     <div class="card p-3 mb-3 shadow-sm text-center">
         <div id="reader"></div>
         <button id="startScanBtn" class="btn btn-success mt-3" disabled>تشغيل الكاميرا ومسح الكود</button>
     </div>
 
-    <!-- بطاقة عرض معلومات الأصل -->
     <div id="resultCard" class="card p-4 shadow-sm" style="display: none;">
         <div class="barcode-container">
             <svg id="barcodeCanvas"></svg>
         </div>
-        
         <h5 class="text-primary border-bottom pb-2">تفاصيل الأصل</h5>
         <div id="assetDetails"></div>
         <button onclick="restartScanner()" class="btn btn-outline-primary mt-3 w-100">مسح كود آخر</button>
@@ -48,13 +41,12 @@
 </div>
 
 <script>
-    // ⚠️ استبدل هذا الرابط برابط Web App الخاص بك من Google Apps Script (الذي ينتهي بـ /exec)
+    // ⚠️ ضع رابط Web App الخاص بك من Google Apps Script هنا
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYBvXPSzfHifbPATuPifxJEtBLLqin8adHznx1DIrtRGGLyVT-tOYhMFjEhE624fMB/exec';
 
     let excelData = [];
     let html5QrCode = null;
 
-    // جلب البيانات تلقائياً عند فتح الصفحة
     window.addEventListener('DOMContentLoaded', () => {
         loadDataFromAppsScript();
     });
@@ -83,7 +75,7 @@
                 document.getElementById('startScanBtn').disabled = false;
             })
             .catch(err => {
-                showError("تعذر الاتصال بـ Google Sheets. يرجى التأكد من رابط Web App وصلاحية (Anyone).");
+                showError("تعذر الاتصال بـ Google Sheets.");
             });
     }
 
@@ -93,7 +85,6 @@
         statusDiv.innerHTML = msg;
     }
 
-    // تشغيل الكاميرا وإعدادات المسح الحساسة
     document.getElementById('startScanBtn').addEventListener('click', function() {
         startCamera();
     });
@@ -101,23 +92,16 @@
     function startCamera() {
         html5QrCode = new Html5Qrcode("reader");
         
-        // إعدادات محسنة لالتقاط الباركود بسرعة وبجميع الأشكال
+        // إعدادات مرنة وقوية جداً لقراءة Code 39 و Code 128 حتى مع وجود النجوم
         const config = { 
-            fps: 20, 
-            qrbox: { width: 320, height: 160 },
-            formatsToSupport: [ 
-                Html5QrcodeSupportedFormats.CODE_39,
-                Html5QrcodeSupportedFormats.CODE_128,
-                Html5QrcodeSupportedFormats.EAN_13,
-                Html5QrcodeSupportedFormats.QR_CODE
-            ]
+            fps: 25,
+            qrbox: { width: 320, height: 160 }
         };
 
         html5QrCode.start(
             { facingMode: "environment" }, 
             config,
             (decodedText) => {
-                // إيقاف الكاميرا فور الالتقاط لعرض النتائج
                 html5QrCode.stop().then(() => {
                     findAndDisplayAsset(decodedText);
                 }).catch(() => {
@@ -125,23 +109,24 @@
                 });
             },
             (err) => {}
-        ).catch(err => alert("يرجى السماح باستخدام الكاميرا في المتصفح."));
+        ).catch(err => alert("يرجى السماح باستخدام الكاميرا."));
     }
 
-    // إمكانية إعادة المسح من جديد
     function restartScanner() {
         document.getElementById('resultCard').style.display = 'none';
         startCamera();
     }
 
-    // المطابقة والعرض
-    function findAndDisplayAsset(code) {
-        const cleanCode = code.replace(/\*/g, '').trim();
+    function findAndDisplayAsset(scannedCode) {
+        // 1. تنظيف الكود الممسوح من النجوم والأحرف الزائدة والمسافات
+        const cleanScanned = String(scannedCode).replace(/[*]/g, '').trim().toUpperCase();
 
+        // 2. البحث والتطابق المرن داخل الجدول
         const asset = excelData.find(row => {
-            const c = String(row['Code'] || '').trim();
-            const b = String(row['Barcode'] || '').replace(/\*/g, '').trim();
-            return c === cleanCode || b === cleanCode;
+            const codeVal = String(row['Code'] || '').replace(/[*]/g, '').trim().toUpperCase();
+            const barcodeVal = String(row['Barcode'] || '').replace(/[*]/g, '').trim().toUpperCase();
+            
+            return codeVal === cleanScanned || barcodeVal === cleanScanned;
         });
 
         const resultCard = document.getElementById('resultCard');
@@ -149,7 +134,7 @@
 
         if (asset) {
             try {
-                JsBarcode("#barcodeCanvas", cleanCode, {
+                JsBarcode("#barcodeCanvas", cleanScanned, {
                     format: "CODE128",
                     lineColor: "#000",
                     width: 2,
@@ -174,7 +159,7 @@
             `;
         } else {
             document.getElementById('barcodeCanvas').innerHTML = '';
-            assetDetails.innerHTML = `<div class="alert alert-danger">لم يتم العثور على أصل مرتبط بالكود: <strong>${cleanCode}</strong></div>`;
+            assetDetails.innerHTML = `<div class="alert alert-danger">تم مسح الكود (<strong>${cleanScanned}</strong>) بنجاح، ولكنه غير موجود في جدول الإكسل.</div>`;
         }
         resultCard.style.display = 'block';
     }
