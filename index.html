@@ -19,24 +19,35 @@
 <div class="container py-4" style="max-width: 700px;">
     <h3 class="text-center mb-3 text-primary">نظام جرد الأصول والمستودع</h3>
 
+    <!-- حالة الاتصال -->
     <div class="card p-3 mb-3 shadow-sm text-center">
         <div id="connectionStatus" class="alert alert-info m-0">
             جاري الاتصال بـ Google Sheets وتحديث البيانات...
         </div>
     </div>
 
+    <!-- الكاميرا والمدخل اليدوي السريع -->
     <div class="card p-3 mb-3 shadow-sm text-center">
         <div id="reader"></div>
-        <button id="startScanBtn" class="btn btn-success mt-3" disabled>تشغيل الكاميرا ومسح الكود</button>
+        <button id="startScanBtn" class="btn btn-success mt-3" disabled>فتح الكاميرا ومسح الباركود</button>
+        
+        <hr class="my-3">
+        
+        <!-- خيار البحث اليدوي المباشر في حال تجربة النص من الشاشة -->
+        <div class="input-group">
+            <input type="text" id="manualCodeInput" class="form-control text-center" placeholder="أو أدخل الكود يدوياً هنا (مثال: DAR_J4Y8Z5J2I2)">
+            <button class="btn btn-primary" onclick="searchManualCode()">بحث</button>
+        </div>
     </div>
 
+    <!-- عرض النتائج -->
     <div id="resultCard" class="card p-4 shadow-sm" style="display: none;">
         <div class="barcode-container">
             <svg id="barcodeCanvas"></svg>
         </div>
         <h5 class="text-primary border-bottom pb-2">تفاصيل الأصل</h5>
         <div id="assetDetails"></div>
-        <button onclick="restartScanner()" class="btn btn-outline-primary mt-3 w-100">مسح كود آخر</button>
+        <button onclick="restartScanner()" class="btn btn-outline-primary mt-3 w-100">مسح / بحث عن كود آخر</button>
     </div>
 </div>
 
@@ -85,6 +96,7 @@
         statusDiv.innerHTML = msg;
     }
 
+    // تشغيل الكاميرا
     document.getElementById('startScanBtn').addEventListener('click', function() {
         startCamera();
     });
@@ -92,10 +104,9 @@
     function startCamera() {
         html5QrCode = new Html5Qrcode("reader");
         
-        // إعدادات مرنة وقوية جداً لقراءة Code 39 و Code 128 حتى مع وجود النجوم
         const config = { 
-            fps: 25,
-            qrbox: { width: 320, height: 160 }
+            fps: 30,
+            qrbox: { width: 350, height: 180 }
         };
 
         html5QrCode.start(
@@ -114,14 +125,20 @@
 
     function restartScanner() {
         document.getElementById('resultCard').style.display = 'none';
-        startCamera();
+        document.getElementById('manualCodeInput').value = '';
     }
 
+    function searchManualCode() {
+        const inputVal = document.getElementById('manualCodeInput').value;
+        if (!inputVal) return;
+        findAndDisplayAsset(inputVal);
+    }
+
+    // دالة المطابقة والعرض الموحدة
     function findAndDisplayAsset(scannedCode) {
-        // 1. تنظيف الكود الممسوح من النجوم والأحرف الزائدة والمسافات
+        // تنظيف الكود تماماً من النجوم والرموز الزائدة
         const cleanScanned = String(scannedCode).replace(/[*]/g, '').trim().toUpperCase();
 
-        // 2. البحث والتطابق المرن داخل الجدول
         const asset = excelData.find(row => {
             const codeVal = String(row['Code'] || '').replace(/[*]/g, '').trim().toUpperCase();
             const barcodeVal = String(row['Barcode'] || '').replace(/[*]/g, '').trim().toUpperCase();
@@ -159,7 +176,7 @@
             `;
         } else {
             document.getElementById('barcodeCanvas').innerHTML = '';
-            assetDetails.innerHTML = `<div class="alert alert-danger">تم مسح الكود (<strong>${cleanScanned}</strong>) بنجاح، ولكنه غير موجود في جدول الإكسل.</div>`;
+            assetDetails.innerHTML = `<div class="alert alert-danger">تم البحث عن الكود (<strong>${cleanScanned}</strong>)، ولكنه غير موجود في جدول الإكسل.</div>`;
         }
         resultCard.style.display = 'block';
     }
