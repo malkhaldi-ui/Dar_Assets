@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام جرد الأصول والمستودع</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Html5-QRCode لمسح الكود عبر الكاميرا -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <!-- JsBarcode لرسم الباركود -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        body { background-color: #f4f6f9; font-family: system-ui, -apple-system, sans-serif; }
+        #reader { width: 100%; max-width: 450px; margin: auto; border-radius: 12px; overflow: hidden; }
+        .barcode-container { text-align: center; margin-bottom: 15px; }
+        .status-badge { font-size: 0.9rem; padding: 6px 12px; }
+    </style>
+</head>
+<body>
+
+<div class="container py-4" style="max-width: 700px;">
+    <h3 class="text-center mb-3 text-primary">نظام جرد الأصول والمستودع</h3>
+
+    <!-- حالة الاتصال بـ Google Sheets -->
+    <div class="card p-3 mb-3 shadow-sm text-center">
+        <div id="connectionStatus" class="alert alert-info m-0">
+            جاري الاتصال بـ Google Sheets وتحديث البيانات...
+        </div>
+    </div>
+
+    <!-- الكاميرا وزر المسح -->
+    <div class="card p-3 mb-3 shadow-sm text-center">
+        <div id="reader"></div>
+        <button id="startScanBtn" class="btn btn-success mt-3" disabled>تشغيل الكاميرا ومسح الكود</button>
+    </div>
+
+    <!-- بطاقة عرض معلومات الأصل -->
+    <div id="resultCard" class="card p-4 shadow-sm" style="display: none;">
+        <div class="barcode-container">
+            <svg id="barcodeCanvas"></svg>
+        </div>
+        
+        <h5 class="text-primary border-bottom pb-2">تفاصيل الأصل</h5>
+        <div id="assetDetails"></div>
+    </div>
+</div>
+
+<script>
+    // ⚠️ ضع رابط Web App الخاص بـ Google Apps Script الذي ينتهي بـ /exec هنا
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYBvXPSzfHifbPATuPifxJEtBLLqin8adHznx1DIrtRGGLyVT-tOYhMFjEhE624fMB/exec';
+
+    let excelData = [];
+
+    // جلب البيانات تلقائياً بمجرد فتح التطبيق
+    window.addEventListener('DOMContentLoaded', () => {
+        loadDataFromAppsScript();
+    });
+
+    function loadDataFromAppsScript() {
+        fetch(APPS_SCRIPT_URL)
+            .then(response => response.json())
+            .then(rawData => {
+                if (!rawData || rawData.length < 2) {
+                    showError("الجدول فارغ أو لا يحتوي على بيانات كافية.");
+                    return;
+                }
+
+                // العناوين المفتاحية (الصف الأول)
+                const headers = rawData[0];
+
+                // تحويل مصفوفة الصفوف إلى كائنات مفتاح وقيمة (Key-Value)
+                excelData = rawData.slice(1).map(row => {
+                    let obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = row[index];
+                    });
+                    return obj;
+                });
+
+                const statusDiv = document.getElementById('connectionStatus');
+                statusDiv.className = "alert alert-success m-0";
+                statusDiv.innerHTML = `تم الاتصال بنجاح بـ Google Sheets! تم تحميل <strong>${excelData.length}</strong> أصل جاهز للجرد.`;
+                document.getElementById('startScanBtn').disabled = false;
+            })
+            .catch(err => {
+                showError("تعذر الاتصال بـ Google Sheets. التأكد من رابط Web App وصلاحية (Anyone).");
+            });
+    }
+
+    function showError(msg) {
+        const statusDiv = document.getElementById('connectionStatus');
+        statusDiv.className = "alert alert-danger m-0";
+        statusDiv.innerHTML = msg;
+    }
+
+    // تشغيل الكاميرا
+    document.getElementById('startScanBtn').addEventListener('click', function() {
+        const html5QrCode = new Html5Qrcode("reader");
+        
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            { fps: 15, qrbox: { width: 250, height: 120 } },
+            (decodedText) => {
+                findAndDisplayAsset(decodedText);
+            },
+            (err) => {}
+        ).catch(err => alert("يرجى السماح باستخدام الكاميرا في المتصفح."));
+    });
+
+    // البحث عن الأصل المطلوب
+    function findAndDisplayAsset(code) {
+        const cleanCode = code.replace(/\*/g, '').trim();
+
+        const asset = excelData.find(row => {
+            const c = String(row['Code'] || '').trim();
+            const b = String(row['Barcode'] || '').replace(/\*/g, '').trim();
+            return c === cleanCode || b === cleanCode;
+        });
+
+        const resultCard = document.getElementById('resultCard');
+        const assetDetails = document.getElementById('assetDetails');
+
+        if (asset) {
+            // رسم الباركود
+            try {
+                JsBarcode("#barcodeCanvas", cleanCode, {
+                    format: "CODE128",
+                    lineColor: "#000",
+                    width: 2,
+                    height: 50,
+                    displayValue: true
+                });
+            } catch(e) {}
+
+            assetDetails.innerHTML = `
+                <table class="table table-bordered text-right mt-2">
+                    <tr><th class="bg-light" style="width:35%">الكود المرجعي:</th><td><strong>${asset['Code'] || '-'}</strong></td></tr>
+                    <tr><th class="bg-light">الوصف:</th><td>${asset['الوصف / Description'] || '-'}</td></tr>
+                    <tr><th class="bg-light">الوصف العام:</th><td>${asset['الوصف العام / Category'] || '-'}</td></tr>
+                    <tr><th class="bg-light">المصنع / Brand:</th><td>${asset['المصنع / Manufacturer / Brand'] || '-'}</td></tr>
+                    <tr><th class="bg-light">الموديل:</th><td>${asset['الموديل / Model'] || '-'}</td></tr>
+                    <tr><th class="bg-light">الرقم التسلسلي:</th><td>${asset['الرقم التسلسلي / Serial Number'] || '-'}</td></tr>
+                    <tr><th class="bg-light">الموقع والمكتب:</th><td>${asset['الموقع / Location'] || ''} - ${asset['مكتب / Office'] || ''}</td></tr>
+                    <tr><th class="bg-light">المستلم:</th><td>${asset['الاسم / Name'] || '-'} (${asset['القسم / department'] || ''})</td></tr>
+                    <tr><th class="bg-light">الحالة عند الفحص:</th><td><span class="badge bg-success status-badge">${asset['الحالة عند الفحص / Condition'] || '-'}</span></td></tr>
+                    <tr><th class="bg-light">ملاحظات:</th><td>${asset['ملاحظات / Comments'] || '-'}</td></tr>
+                </table>
+            `;
+        } else {
+            document.getElementById('barcodeCanvas').innerHTML = '';
+            assetDetails.innerHTML = `<div class="alert alert-danger">لم يتم العثور على أصل مرتبط بالكود: <strong>${cleanCode}</strong></div>`;
+        }
+        resultCard.style.display = 'block';
+    }
+</script>
+</body>
+</html>
