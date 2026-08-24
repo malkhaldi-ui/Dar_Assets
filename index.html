@@ -57,7 +57,7 @@
 
         .card-custom { border: none; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
 
-        .table-custom th { background-color: #f1f5f4; color: var(--dar-dark); width: 38%; font-size: 0.9rem; }
+        .table-custom th { background-color: #f1f5f4; color: var(--dar-dark); width: 40%; font-size: 0.9rem; }
         .table-custom td { font-size: 0.95rem; }
 
         .status-pill { display: inline-block; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
@@ -247,7 +247,7 @@
     </div>
 
     <footer class="mt-auto">
-        <div>الإصدار: <strong>v3.6.0</strong></div>
+        <div>الإصدار: <strong>v3.7.0</strong></div>
         <div>تم التصميم والتطوير بواسطة: <strong>قسم المراقبة والتقييم - Mhedy</strong></div>
     </footer>
 
@@ -377,13 +377,23 @@
         startScanner();
     }
 
-    // عرض تفاصيل الأصل عند مسحه بدون إظهار أسرار الباركود والكود
+    // دالة جلب قيمة أي عمود بالبحث عن الكلمة المفتاحية المرنة
+    function getVal(assetObj, keyword) {
+        for (let key in assetObj) {
+            if (key.toLowerCase().includes(keyword.toLowerCase())) {
+                return assetObj[key] || '-';
+            }
+        }
+        return '-';
+    }
+
+    // عرض تفاصيل الأصل الممسوح بمرونة عالية مع ضمان إظهار جميع الأعمدة الجديدة
     function findAndDisplayAsset(scannedCode) {
         const cleanScanned = String(scannedCode).replace(/[*]/g, '').trim().toUpperCase();
 
         const asset = excelData.find(row => {
-            const c = String(row['Code'] || '').replace(/[*]/g, '').trim().toUpperCase();
-            const b = String(row['Barcode'] || '').replace(/[*]/g, '').trim().toUpperCase();
+            const c = String(getVal(row, 'code') !== '-' ? getVal(row, 'code') : '').replace(/[*]/g, '').trim().toUpperCase();
+            const b = String(getVal(row, 'barcode') !== '-' ? getVal(row, 'barcode') : '').replace(/[*]/g, '').trim().toUpperCase();
             return c === cleanScanned || b === cleanScanned;
         });
 
@@ -391,30 +401,32 @@
         const detailsDiv = document.getElementById('assetDetails');
 
         if (asset) {
-            const conditionText = String(asset['الحالة عند الفحص / Condition'] || '-').trim();
+            const conditionText = String(getVal(asset, 'حالة') !== '-' ? getVal(asset, 'حالة') : (getVal(asset, 'condition') !== '-' ? getVal(asset, 'condition') : '-')).trim();
             const statusStyle = getStatusBadge(conditionText);
 
-            // جلب تاريخ الشراء وتنسيقه إذا وجد
-            let purchaseDateFormatted = asset['تاريخ الشراء / Purchase Date'] || '-';
-            if (purchaseDateFormatted !== '-' && purchaseDateFormatted.includes('T')) {
-                purchaseDateFormatted = purchaseDateFormatted.split('T')[0];
+            let pDate = getVal(asset, 'تاريخ');
+            if (pDate !== '-' && String(pDate).includes('T')) {
+                pDate = String(pDate).split('T')[0];
             }
+
+            const pPrice = getVal(asset, 'سعر الشراء') !== '-' ? getVal(asset, 'سعر الشراء') : getVal(asset, 'سعر');
+            const pCurr = getVal(asset, 'العملة') !== '-' ? getVal(asset, 'العملة') : '';
 
             detailsDiv.innerHTML = `
                 <table class="table table-bordered table-custom text-right mt-2 mb-0">
-                    <tr><th>اسم القطعة / الوصف:</th><td><strong>${asset['الوصف / Description'] || '-'}</strong></td></tr>
-                    <tr><th>الوصف العام:</th><td>${asset['الوصف العام / Category'] || '-'}</td></tr>
+                    <tr><th>اسم القطعة / الوصف:</th><td><strong>${getVal(asset, 'الوصف /')}</strong></td></tr>
+                    <tr><th>الوصف العام:</th><td>${getVal(asset, 'الوصف العام')}</td></tr>
                     <tr><th>حالة القطعة:</th><td><span class="status-pill ${statusStyle.class}">${statusStyle.emoji} ${conditionText}</span></td></tr>
-                    <tr><th>العدد:</th><td>${asset['العدد / Quantity'] || '1'}</td></tr>
-                    <tr><th>المصنع / Brand:</th><td>${asset['المصنع / Manufacturer / Brand'] || '-'}</td></tr>
-                    <tr><th>الموديل:</th><td>${asset['الموديل / Model'] || '-'}</td></tr>
-                    <tr><th>الرقم التسلسلي:</th><td>${asset['الرقم التسلسلي / Serial Number'] || '-'}</td></tr>
-                    <tr><th>الموقع والمكتب:</th><td>${asset['الموقع / Location'] || ''} - ${asset['مكتب / Office'] || ''}</td></tr>
-                    <tr><th>الاسم / المستلم:</th><td>${asset['الاسم / Name'] || '-'} (${asset['القسم / department'] || ''})</td></tr>
-                    <tr><th>الداعم / Donor:</th><td>${asset['الداعم / Donor'] || '-'}</td></tr>
-                    <tr><th>تاريخ الشراء:</th><td>${purchaseDateFormatted}</td></tr>
-                    <tr><th>سعر الشراء:</th><td>${asset['سعر الشراء / Purchase Price'] ? asset['سعر الشراء / Purchase Price'] + ' ' + (asset['العملة / Currency'] || '') : '-'}</td></tr>
-                    <tr><th>ملاحظات:</th><td>${asset['ملاحظات / Comments'] || '-'}</td></tr>
+                    <tr><th>العدد:</th><td>${getVal(asset, 'العدد')}</td></tr>
+                    <tr><th>المصنع / Brand:</th><td>${getVal(asset, 'المصنع')}</td></tr>
+                    <tr><th>الموديل:</th><td>${getVal(asset, 'الموديل /')}</td></tr>
+                    <tr><th>الرقم التسلسلي:</th><td>${getVal(asset, 'التسلسلي')}</td></tr>
+                    <tr><th>الموقع والمكتب:</th><td>${getVal(asset, 'الموقع')} - ${getVal(asset, 'مكتب')}</td></tr>
+                    <tr><th>الاسم / المستلم:</th><td>${getVal(asset, 'الاسم')} (${getVal(asset, 'القسم')})</td></tr>
+                    <tr><th>الداعم / Donor:</th><td>${getVal(asset, 'الداعم')}</td></tr>
+                    <tr><th>تاريخ الشراء:</th><td>${pDate}</td></tr>
+                    <tr><th>سعر الشراء:</th><td>${pPrice !== '-' ? pPrice + ' ' + pCurr : '-'}</td></tr>
+                    <tr><th>ملاحظات:</th><td>${getVal(asset, 'ملاحظات')}</td></tr>
                 </table>
             `;
         } else {
