@@ -64,21 +64,6 @@
             color: white;
         }
         
-        .btn-dar-outline {
-            background-color: transparent;
-            color: var(--dar-teal);
-            border: 2px solid var(--dar-teal);
-            font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 10px;
-            transition: all 0.2s ease;
-        }
-
-        .btn-dar-outline:hover {
-            background-color: var(--dar-teal);
-            color: white;
-        }
-
         .card-custom {
             border: none;
             border-radius: 15px;
@@ -154,6 +139,10 @@
             transform: translateX(-50%);
             text-align: center;
         }
+        
+        #iframeContainer {
+            display: none;
+        }
     </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
@@ -192,6 +181,9 @@
 
     </div>
 
+    <!-- iframe مخفي لإرسال البيانات -->
+    <iframe id="submitFrame" style="display:none;"></iframe>
+
     <!-- مودال إضافة أصل جديد -->
     <div class="modal fade" id="addAssetModal" tabindex="-1" aria-labelledby="addAssetModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable">
@@ -203,40 +195,40 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="addAssetForm">
+                    <form id="addAssetForm" target="submitFrame" method="POST" action="">
                         <div class="mb-3">
                             <label for="assetCategory" class="form-label">الوصف العام / Category *</label>
-                            <input type="text" class="form-control" id="assetCategory" placeholder="مثال: أجهزة كمبيوتر" required>
+                            <input type="text" class="form-control" id="assetCategory" name="category" placeholder="مثال: أجهزة كمبيوتر" required>
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetDesc" class="form-label">الوصف / Description *</label>
-                            <input type="text" class="form-control" id="assetDesc" placeholder="الوصف التفصيلي للقطعة" required>
+                            <input type="text" class="form-control" id="assetDesc" name="description" placeholder="الوصف التفصيلي للقطعة" required>
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetBrand" class="form-label">المصنع / Brand</label>
-                            <input type="text" class="form-control" id="assetBrand" placeholder="اسم المصنع">
+                            <input type="text" class="form-control" id="assetBrand" name="brand" placeholder="اسم المصنع">
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetModel" class="form-label">الموديل / Model</label>
-                            <input type="text" class="form-control" id="assetModel" placeholder="الموديل">
+                            <input type="text" class="form-control" id="assetModel" name="model" placeholder="الموديل">
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetSerial" class="form-label">الرقم التسلسلي / Serial Number</label>
-                            <input type="text" class="form-control" id="assetSerial" placeholder="الرقم التسلسلي">
+                            <input type="text" class="form-control" id="assetSerial" name="serialNumber" placeholder="الرقم التسلسلي">
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetQuantity" class="form-label">العدد / Quantity</label>
-                            <input type="number" class="form-control" id="assetQuantity" placeholder="1" value="1" min="1">
+                            <input type="number" class="form-control" id="assetQuantity" name="quantityNum" placeholder="1" value="1" min="1">
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetCondition" class="form-label">الحالة عند الفحص / Condition</label>
-                            <select class="form-select" id="assetCondition">
+                            <select class="form-select" id="assetCondition" name="condition">
                                 <option value="جيد">✅ جيد</option>
                                 <option value="مستعمل">⚠️ مستعمل</option>
                                 <option value="تالف">❌ تالف</option>
@@ -249,12 +241,12 @@
                         
                         <div class="mb-3">
                             <label for="assetLocation" class="form-label">الموقع / Location</label>
-                            <input type="text" class="form-control" id="assetLocation" placeholder="الموقع">
+                            <input type="text" class="form-control" id="assetLocation" name="location" placeholder="الموقع">
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetOffice" class="form-label">مكتب / Office</label>
-                            <input type="text" class="form-control" id="assetOffice" placeholder="اسم المكتب">
+                            <input type="text" class="form-control" id="assetOffice" name="office" placeholder="اسم المكتب">
                         </div>
                         
                         <hr>
@@ -262,12 +254,12 @@
                         
                         <div class="mb-3">
                             <label for="assetName" class="form-label">الاسم / Name</label>
-                            <input type="text" class="form-control" id="assetName" placeholder="اسم المستلم">
+                            <input type="text" class="form-control" id="assetName" name="name" placeholder="اسم المستلم">
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetDepartment" class="form-label">القسم / Department</label>
-                            <input type="text" class="form-control" id="assetDepartment" placeholder="القسم">
+                            <input type="text" class="form-control" id="assetDepartment" name="department" placeholder="القسم">
                         </div>
                         
                         <hr>
@@ -275,22 +267,22 @@
                         
                         <div class="mb-3">
                             <label for="assetDonor" class="form-label">الداعم / Donor</label>
-                            <input type="text" class="form-control" id="assetDonor" placeholder="اسم الداعم">
+                            <input type="text" class="form-control" id="assetDonor" name="donor" placeholder="اسم الداعم">
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetPurchaseDate" class="form-label">تاريخ الشراء / Purchase Date</label>
-                            <input type="date" class="form-control" id="assetPurchaseDate">
+                            <input type="date" class="form-control" id="assetPurchaseDate" name="purchaseDate">
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetPurchasePrice" class="form-label">سعر الشراء / Purchase Price</label>
-                            <input type="number" class="form-control" id="assetPurchasePrice" placeholder="السعر" step="0.01">
+                            <input type="number" class="form-control" id="assetPurchasePrice" name="purchasePrice" placeholder="السعر" step="0.01">
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetCurrency" class="form-label">العملة / Currency</label>
-                            <select class="form-select" id="assetCurrency">
+                            <select class="form-select" id="assetCurrency" name="currency">
                                 <option value="USD">💵 دولار أمريكي (USD)</option>
                                 <option value="EUR">💶 يورو (EUR)</option>
                                 <option value="GBP">💷 جنيه إسترليني (GBP)</option>
@@ -304,7 +296,7 @@
                         
                         <div class="mb-3">
                             <label for="assetComments" class="form-label">ملاحظات / Comments</label>
-                            <textarea class="form-control" id="assetComments" rows="2" placeholder="ملاحظات إضافية"></textarea>
+                            <textarea class="form-control" id="assetComments" name="comments" rows="2" placeholder="ملاحظات إضافية"></textarea>
                         </div>
                     </form>
                 </div>
@@ -319,7 +311,7 @@
     </div>
 
     <footer class="mt-auto">
-        <div>الإصدار: <strong>v3.1.0</strong></div>
+        <div>الإصدار: <strong>v3.2.0</strong></div>
         <div>تم التصميم والتطوير بواسطة: <strong>قسم المراقبة والتقييم - Mhedy</strong></div>
     </footer>
 
@@ -331,16 +323,24 @@
     let excelData = [];
     let html5QrCode = null;
     let addAssetModal = null;
+    let isSubmitting = false;
 
     window.addEventListener('DOMContentLoaded', () => {
         addAssetModal = new bootstrap.Modal(document.getElementById('addAssetModal'));
+        
+        // تعيين action للنموذج
+        document.getElementById('addAssetForm').action = APPS_SCRIPT_URL;
+        
         fetchData();
         
         document.getElementById('openAddAssetModal').addEventListener('click', () => {
             addAssetModal.show();
         });
         
-        document.getElementById('saveAssetBtn').addEventListener('click', saveAsset);
+        document.getElementById('saveAssetBtn').addEventListener('click', saveAssetWithIframe);
+        
+        // الاستماع لحدث تحميل iframe
+        document.getElementById('submitFrame').addEventListener('load', handleIframeResponse);
     });
 
     function fetchData() {
@@ -367,96 +367,74 @@
             });
     }
 
-    function saveAsset() {
+    function saveAssetWithIframe() {
         const form = document.getElementById('addAssetForm');
         if (!form.checkValidity()) {
             form.reportValidity();
             return;
         }
         
-        const assetData = {
-            category: document.getElementById('assetCategory').value.trim(),
-            description: document.getElementById('assetDesc').value.trim(),
-            brand: document.getElementById('assetBrand').value.trim(),
-            model: document.getElementById('assetModel').value.trim(),
-            serialNumber: document.getElementById('assetSerial').value.trim(),
-            quantityNum: document.getElementById('assetQuantity').value || '1',
-            condition: document.getElementById('assetCondition').value,
-            location: document.getElementById('assetLocation').value.trim(),
-            office: document.getElementById('assetOffice').value.trim(),
-            name: document.getElementById('assetName').value.trim(),
-            department: document.getElementById('assetDepartment').value.trim(),
-            donor: document.getElementById('assetDonor').value.trim(),
-            purchaseDate: document.getElementById('assetPurchaseDate').value,
-            purchasePrice: document.getElementById('assetPurchasePrice').value || '',
-            currency: document.getElementById('assetCurrency').value,
-            comments: document.getElementById('assetComments').value.trim()
-        };
+        if (isSubmitting) return;
+        isSubmitting = true;
         
         const saveBtn = document.getElementById('saveAssetBtn');
         saveBtn.disabled = true;
         saveBtn.textContent = 'جاري الحفظ...';
         
-        // استخدام fetch عادي بدون no-cors
-        fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(assetData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+        // إرسال النموذج عبر iframe
+        form.submit();
+        
+        // مهلة في حال لم يستجب الـ iframe
+        setTimeout(() => {
+            if (isSubmitting) {
+                isSubmitting = false;
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 حفظ الأصل';
+                showToast('⚠️ لم يتم استلام رد من الخادم. تحقق من الاتصال.', 'warning');
             }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                showToast('✅ تم إضافة الأصل بنجاح! الكود: ' + data.code, 'success');
-                addAssetModal.hide();
-                resetForm();
-                // إعادة تحميل البيانات
-                setTimeout(fetchData, 1000);
-            } else {
-                showToast('❌ خطأ: ' + (data.error || 'حدث خطأ غير معروف'), 'danger');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            // محاولة إرسال باستخدام طريقة بديلة
-            sendWithFormData(assetData);
-        })
-        .finally(() => {
-            saveBtn.disabled = false;
-            saveBtn.textContent = '💾 حفظ الأصل';
-        });
+        }, 15000);
     }
 
-    // طريقة بديلة للإرسال باستخدام FormData
-    function sendWithFormData(assetData) {
-        const formData = new FormData();
-        formData.append('data', JSON.stringify(assetData));
-        
-        fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showToast('✅ تم إضافة الأصل بنجاح! الكود: ' + data.code, 'success');
-                addAssetModal.hide();
-                resetForm();
-                setTimeout(fetchData, 1000);
-            } else {
-                showToast('❌ خطأ: ' + (data.error || 'حدث خطأ غير معروف'), 'danger');
+    function handleIframeResponse() {
+        try {
+            const iframe = document.getElementById('submitFrame');
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            
+            // محاولة قراءة النص من iframe
+            let responseText = iframeDoc.body ? iframeDoc.body.textContent : '';
+            
+            if (responseText) {
+                try {
+                    const data = JSON.parse(responseText);
+                    if (data.success) {
+                        showToast('✅ تم إضافة الأصل بنجاح! الكود: ' + data.code, 'success');
+                        addAssetModal.hide();
+                        resetForm();
+                        setTimeout(fetchData, 1000);
+                    } else {
+                        showToast('❌ خطأ: ' + (data.error || 'حدث خطأ غير معروف'), 'danger');
+                    }
+                } catch (e) {
+                    // إذا لم يكن JSON، قد يكون رد HTML
+                    if (responseText.includes('success')) {
+                        showToast('✅ تم إضافة الأصل بنجاح!', 'success');
+                        addAssetModal.hide();
+                        resetForm();
+                        setTimeout(fetchData, 1000);
+                    } else {
+                        showToast('⚠️ تم الإرسال ولكن لم يتم تأكيد الإضافة.', 'warning');
+                    }
+                }
             }
-        })
-        .catch(error => {
-            showToast('❌ فشل الإضافة. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.', 'danger');
-            console.error('Error with FormData:', error);
-        });
+        } catch (e) {
+            console.error('Error reading iframe response:', e);
+        }
+        
+        // إعادة تفعيل الزر
+        const saveBtn = document.getElementById('saveAssetBtn');
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 حفظ الأصل';
+        isSubmitting = false;
     }
 
     function showToast(message, type = 'info') {
