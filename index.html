@@ -125,7 +125,7 @@
 
     </div>
 
-    <!-- مودال إضافة أصل جديد متضمناً كافة الأعمدة -->
+    <!-- مودال إضافة أصل جديد شامل كافة الأعمدة الـ 32 -->
     <div class="modal fade" id="addAssetModal" tabindex="-1" aria-labelledby="addAssetModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
@@ -194,6 +194,12 @@
                                 </select>
                             </div>
                         </div>
+
+                        <!-- الحقل الجديد: رقم محضر الاتلاف أو السرقة -->
+                        <div class="mb-3">
+                            <label for="assetLossNo" class="form-label">رقم محضر الإتلاف / السرقة / LOSS/DAMAGE NO</label>
+                            <input type="text" class="form-control" id="assetLossNo" name="lossNo" placeholder="رقم المحضر إن وجد">
+                        </div>
                         
                         <hr>
                         <h6 class="mb-3" style="color: var(--dar-teal-dark);">معلومات الموقع والموظف</h6>
@@ -239,7 +245,6 @@
                             <input type="text" class="form-control" id="assetDonor" name="donor" placeholder="اسم الداعم">
                         </div>
 
-                        <!-- حقول PR, PO, GRN, رقم الفاتورة -->
                         <div class="row">
                             <div class="col-6 mb-3">
                                 <label for="assetPR" class="form-label">PR</label>
@@ -309,7 +314,7 @@
     </div>
 
     <footer class="mt-auto">
-        <div>الإصدار: <strong>v4.0.0</strong></div>
+        <div>الإصدار: <strong>v4.1.0</strong></div>
         <div>تم التصميم والتطوير بواسطة: <strong>قسم المراقبة والتقييم - Mhedy</strong></div>
     </footer>
 
@@ -380,7 +385,7 @@
             body: JSON.stringify(dataObj)
         })
         .then(() => {
-            showToast('✅ تم إضافة الأصل بنجاح وتوليد معادلة الـ QR Code!', 'success');
+            showToast('✅ تم إضافة الأصل بنجاح وحفظ كافة البيانات في الإكسل!', 'success');
             addAssetModal.hide();
             resetForm();
             setTimeout(fetchData, 2000);
@@ -472,11 +477,14 @@
             const pPrice = getVal(asset, 'سعر الشراء') !== '-' ? getVal(asset, 'سعر الشراء') : getVal(asset, 'سعر');
             const pCurr = getVal(asset, 'العملة') !== '-' ? getVal(asset, 'العملة') : '';
 
+            const lossNumber = getVal(asset, 'اتلاف') !== '-' ? getVal(asset, 'اتلاف') : (getVal(asset, 'loss') !== '-' ? getVal(asset, 'loss') : '-');
+
             detailsDiv.innerHTML = `
                 <table class="table table-bordered table-custom text-right mt-2 mb-0">
                     <tr><th>اسم القطعة / الوصف:</th><td><strong>${getVal(asset, 'الوصف /')}</strong></td></tr>
                     <tr><th>الوصف العام:</th><td>${getVal(asset, 'الوصف العام')}</td></tr>
                     <tr><th>حالة القطعة:</th><td><span class="status-pill ${statusStyle.class}">${statusStyle.emoji} ${conditionText}</span></td></tr>
+                    ${lossNumber !== '-' ? `<tr><th>رقم محضر الإتلاف/السرقة:</th><td><strong class="text-danger">${lossNumber}</strong></td></tr>` : ''}
                     <tr><th>العدد:</th><td>${getVal(asset, 'العدد')}</td></tr>
                     <tr><th>المصنع / Brand:</th><td>${getVal(asset, 'المصنع')}</td></tr>
                     <tr><th>الموديل / رقم الموديل:</th><td>${getVal(asset, 'الموديل /')} ${getVal(asset, 'رقم الموديل') !== '-' ? '(' + getVal(asset, 'رقم الموديل') + ')' : ''}</td></tr>
