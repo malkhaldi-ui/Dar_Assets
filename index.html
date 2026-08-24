@@ -125,7 +125,7 @@
 
     </div>
 
-    <!-- مودال إضافة أصل جديد -->
+    <!-- مودال إضافة أصل جديد متضمناً كافة الأعمدة -->
     <div class="modal fade" id="addAssetModal" tabindex="-1" aria-labelledby="addAssetModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable">
             <div class="modal-content">
@@ -137,9 +137,15 @@
                 </div>
                 <div class="modal-body">
                     <form id="addAssetForm">
+                        <!-- القائمة المنسدلة للوصف العام -->
                         <div class="mb-3">
                             <label for="assetCategory" class="form-label">الوصف العام / Category *</label>
-                            <input type="text" class="form-control" id="assetCategory" name="category" placeholder="مثال: إلكترونيات / أثاث" required>
+                            <select class="form-select" id="assetCategory" name="category" required>
+                                <option value="الكترونيات">📱 الكترونيات</option>
+                                <option value="أثاث">🪑 أثاث</option>
+                                <option value="كهربائيات">⚡ كهربائيات</option>
+                                <option value="اكسسوارات">🔌 اكسسوارات</option>
+                            </select>
                         </div>
                         
                         <div class="mb-3">
@@ -152,82 +158,138 @@
                             <input type="text" class="form-control" id="assetBrand" name="brand" placeholder="اسم المصنع">
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="assetModel" class="form-label">الموديل / Model</label>
-                            <input type="text" class="form-control" id="assetModel" name="model" placeholder="الموديل">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label for="assetModel" class="form-label">الموديل / Model</label>
+                                <input type="text" class="form-control" id="assetModel" name="model" placeholder="الموديل">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="assetModelNumber" class="form-label">رقم الموديل / Model No</label>
+                                <input type="text" class="form-control" id="assetModelNumber" name="modelNumber" placeholder="رقم الموديل">
+                            </div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="assetSerial" class="form-label">الرقم التسلسلي / Serial Number</label>
                             <input type="text" class="form-control" id="assetSerial" name="serialNumber" placeholder="الرقم التسلسلي">
                         </div>
-                        
+
                         <div class="mb-3">
-                            <label for="assetQuantity" class="form-label">العدد / Quantity</label>
-                            <input type="number" class="form-control" id="assetQuantity" name="quantityNum" placeholder="1" value="1" min="1">
+                            <label for="assetAccessories" class="form-label">مستلزمات / Accessories Included</label>
+                            <input type="text" class="form-control" id="assetAccessories" name="accessories" placeholder="مثال: شاحن، حقيبة...">
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="assetCondition" class="form-label">الحالة عند الفحص / Condition</label>
-                            <select class="form-select" id="assetCondition" name="condition">
-                                <option value="جيد">✅ جيد</option>
-                                <option value="مستعمل">⚠️ مستعمل</option>
-                                <option value="تالف">❌ تالف</option>
-                                <option value="مفقود">❌ مفقود</option>
-                            </select>
-                        </div>
-                        
-                        <hr>
-                        <h6 class="mb-3" style="color: var(--dar-teal-dark);">معلومات الموقع</h6>
-                        
-                        <div class="mb-3">
-                            <label for="assetLocation" class="form-label">الموقع / Location</label>
-                            <input type="text" class="form-control" id="assetLocation" name="location" placeholder="سوريا / تركيا / فرنسا ...">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="assetOffice" class="form-label">مكتب / Office</label>
-                            <input type="text" class="form-control" id="assetOffice" name="office" placeholder="اسم المكتب">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label for="assetQuantity" class="form-label">العدد / Quantity</label>
+                                <input type="number" class="form-control" id="assetQuantity" name="quantityNum" value="1" min="1">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="assetCondition" class="form-label">الحالة / Condition</label>
+                                <select class="form-select" id="assetCondition" name="condition">
+                                    <option value="جيد">✅ جيد</option>
+                                    <option value="مستعمل">⚠️ مستعمل</option>
+                                    <option value="تالف">❌ تالف</option>
+                                    <option value="مفقود">❌ مفقود</option>
+                                </select>
+                            </div>
                         </div>
                         
                         <hr>
-                        <h6 class="mb-3" style="color: var(--dar-teal-dark);">معلومات المستلم</h6>
+                        <h6 class="mb-3" style="color: var(--dar-teal-dark);">معلومات الموقع والموظف</h6>
                         
-                        <div class="mb-3">
-                            <label for="assetName" class="form-label">الاسم / Name</label>
-                            <input type="text" class="form-control" id="assetName" name="name" placeholder="اسم المستلم">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label for="assetLocation" class="form-label">الموقع / Location</label>
+                                <input type="text" class="form-control" id="assetLocation" name="location" placeholder="الموقع">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="assetOffice" class="form-label">مكتب / Office</label>
+                                <input type="text" class="form-control" id="assetOffice" name="office" placeholder="المكتب">
+                            </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="assetDepartment" class="form-label">القسم / Department</label>
-                            <input type="text" class="form-control" id="assetDepartment" name="department" placeholder="القسم">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label for="assetName" class="form-label">الاسم / Name</label>
+                                <input type="text" class="form-control" id="assetName" name="name" placeholder="المستلم">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="assetPosition" class="form-label">المنصب / Position</label>
+                                <input type="text" class="form-control" id="assetPosition" name="position" placeholder="المنصب">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label for="assetDepartment" class="form-label">القسم / Department</label>
+                                <input type="text" class="form-control" id="assetDepartment" name="department" placeholder="القسم">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="assetBookmark" class="form-label">المرجعية / Bookmark</label>
+                                <input type="text" class="form-control" id="assetBookmark" name="bookmark" placeholder="المرجعية">
+                            </div>
                         </div>
                         
                         <hr>
-                        <h6 class="mb-3" style="color: var(--dar-teal-dark);">معلومات الشراء والداعم</h6>
+                        <h6 class="mb-3" style="color: var(--dar-teal-dark);">معلومات الشراء والمالية</h6>
                         
                         <div class="mb-3">
                             <label for="assetDonor" class="form-label">الداعم / Donor</label>
-                            <input type="text" class="form-control" id="assetDonor" name="donor" placeholder="اسم المنظمة / الداعم">
+                            <input type="text" class="form-control" id="assetDonor" name="donor" placeholder="اسم الداعم">
+                        </div>
+
+                        <!-- حقول PR, PO, GRN, رقم الفاتورة -->
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label for="assetPR" class="form-label">PR</label>
+                                <input type="text" class="form-control" id="assetPR" name="pr" placeholder="PR">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="assetPO" class="form-label">PO</label>
+                                <input type="text" class="form-control" id="assetPO" name="po" placeholder="PO">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label for="assetGRN" class="form-label">GRN</label>
+                                <input type="text" class="form-control" id="assetGRN" name="grn" placeholder="GRN">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="assetInvoiceNo" class="form-label">رقم الفاتورة / Inv No</label>
+                                <input type="text" class="form-control" id="assetInvoiceNo" name="invoiceNo" placeholder="رقم الفاتورة">
+                            </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="assetPurchaseDate" class="form-label">تاريخ الشراء / Purchase Date</label>
-                            <input type="date" class="form-control" id="assetPurchaseDate" name="purchaseDate">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label for="assetPurchaseDate" class="form-label">تاريخ الشراء</label>
+                                <input type="date" class="form-control" id="assetPurchaseDate" name="purchaseDate">
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label for="assetPurchasePrice" class="form-label">سعر الشراء</label>
+                                <input type="number" class="form-control" id="assetPurchasePrice" name="purchasePrice" placeholder="السعر" step="0.01">
+                            </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="assetPurchasePrice" class="form-label">سعر الشراء / Purchase Price</label>
-                            <input type="number" class="form-control" id="assetPurchasePrice" name="purchasePrice" placeholder="السعر" step="0.01">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="assetCurrency" class="form-label">العملة / Currency</label>
-                            <select class="form-select" id="assetCurrency" name="currency">
-                                <option value="USD">💵 دولار أمريكي (USD)</option>
-                                <option value="EUR">💶 يورو (EUR)</option>
-                                <option value="TRY">₺ ليرة تركية (TRY)</option>
-                            </select>
+                        <div class="row">
+                            <div class="col-4 mb-3">
+                                <label for="assetCurrency" class="form-label">العملة</label>
+                                <select class="form-select" id="assetCurrency" name="currency">
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="TRY">TRY</option>
+                                </select>
+                            </div>
+                            <div class="col-4 mb-3">
+                                <label for="assetCurrency2" class="form-label">العملة 2</label>
+                                <input type="text" class="form-control" id="assetCurrency2" name="currency2" placeholder="عملة 2">
+                            </div>
+                            <div class="col-4 mb-3">
+                                <label for="assetRate" class="form-label">Rate11500</label>
+                                <input type="text" class="form-control" id="assetRate" name="rate" placeholder="Rate">
+                            </div>
                         </div>
                         
                         <div class="mb-3">
@@ -247,7 +309,7 @@
     </div>
 
     <footer class="mt-auto">
-        <div>الإصدار: <strong>v3.7.0</strong></div>
+        <div>الإصدار: <strong>v4.0.0</strong></div>
         <div>تم التصميم والتطوير بواسطة: <strong>قسم المراقبة والتقييم - Mhedy</strong></div>
     </footer>
 
@@ -295,46 +357,42 @@
     }
 
     function saveAssetDirectly() {
-    const form = document.getElementById('addAssetForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
+        const form = document.getElementById('addAssetForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const saveBtn = document.getElementById('saveAssetBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ جاري الحفظ...';
+
+        const formData = new FormData(form);
+        const dataObj = {};
+        formData.forEach((value, key) => {
+            dataObj[key] = value;
+        });
+
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(dataObj)
+        })
+        .then(() => {
+            showToast('✅ تم إضافة الأصل بنجاح وتوليد معادلة الـ QR Code!', 'success');
+            addAssetModal.hide();
+            resetForm();
+            setTimeout(fetchData, 2000);
+        })
+        .catch(err => {
+            showToast('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً.', 'danger');
+        })
+        .finally(() => {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 حفظ الأصل';
+        });
     }
-
-    const saveBtn = document.getElementById('saveAssetBtn');
-    saveBtn.disabled = true;
-    saveBtn.textContent = '⏳ جاري الحفظ...';
-
-    // تجميع عناصر النموذج في كائن JSON
-    const formData = new FormData(form);
-    const dataObj = {};
-    formData.forEach((value, key) => {
-        dataObj[key] = value;
-    });
-
-    // إرسال البيانات بأسلوب JSON يضمن وصول كافة الأعمدة
-    fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-            'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify(dataObj)
-    })
-    .then(() => {
-        showToast('✅ تم إضافة الأصل بنجاح وتعبئة جميع الحقول!', 'success');
-        addAssetModal.hide();
-        resetForm();
-        setTimeout(fetchData, 2000);
-    })
-    .catch(err => {
-        showToast('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً.', 'danger');
-    })
-    .finally(() => {
-        saveBtn.disabled = false;
-        saveBtn.textContent = '💾 حفظ الأصل';
-    });
-}
 
     function showToast(message, type = 'info') {
         const existingToast = document.querySelector('.custom-toast');
@@ -356,6 +414,7 @@
         document.getElementById('addAssetForm').reset();
         document.getElementById('assetQuantity').value = '1';
         document.getElementById('assetCondition').value = 'جيد';
+        document.getElementById('assetCategory').value = 'الكترونيات';
         document.getElementById('assetCurrency').value = 'USD';
     }
 
@@ -380,7 +439,6 @@
         startScanner();
     }
 
-    // دالة جلب قيمة أي عمود بالبحث عن الكلمة المفتاحية المرنة
     function getVal(assetObj, keyword) {
         for (let key in assetObj) {
             if (key.toLowerCase().includes(keyword.toLowerCase())) {
@@ -390,7 +448,6 @@
         return '-';
     }
 
-    // عرض تفاصيل الأصل الممسوح بمرونة عالية مع ضمان إظهار جميع الأعمدة الجديدة
     function findAndDisplayAsset(scannedCode) {
         const cleanScanned = String(scannedCode).replace(/[*]/g, '').trim().toUpperCase();
 
@@ -422,8 +479,9 @@
                     <tr><th>حالة القطعة:</th><td><span class="status-pill ${statusStyle.class}">${statusStyle.emoji} ${conditionText}</span></td></tr>
                     <tr><th>العدد:</th><td>${getVal(asset, 'العدد')}</td></tr>
                     <tr><th>المصنع / Brand:</th><td>${getVal(asset, 'المصنع')}</td></tr>
-                    <tr><th>الموديل:</th><td>${getVal(asset, 'الموديل /')}</td></tr>
+                    <tr><th>الموديل / رقم الموديل:</th><td>${getVal(asset, 'الموديل /')} ${getVal(asset, 'رقم الموديل') !== '-' ? '(' + getVal(asset, 'رقم الموديل') + ')' : ''}</td></tr>
                     <tr><th>الرقم التسلسلي:</th><td>${getVal(asset, 'التسلسلي')}</td></tr>
+                    <tr><th>مستلزمات:</th><td>${getVal(asset, 'مستلزمات')}</td></tr>
                     <tr><th>الموقع والمكتب:</th><td>${getVal(asset, 'الموقع')} - ${getVal(asset, 'مكتب')}</td></tr>
                     <tr><th>الاسم / المستلم:</th><td>${getVal(asset, 'الاسم')} (${getVal(asset, 'القسم')})</td></tr>
                     <tr><th>الداعم / Donor:</th><td>${getVal(asset, 'الداعم')}</td></tr>
