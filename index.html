@@ -295,43 +295,46 @@
     }
 
     function saveAssetDirectly() {
-        const form = document.getElementById('addAssetForm');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-
-        const saveBtn = document.getElementById('saveAssetBtn');
-        saveBtn.disabled = true;
-        saveBtn.textContent = '⏳ جاري الحفظ...';
-
-        const formData = new FormData(form);
-        const searchParams = new URLSearchParams();
-
-        for (const pair of formData.entries()) {
-            searchParams.append(pair[0], pair[1]);
-        }
-
-        fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: searchParams.toString()
-        })
-        .then(() => {
-            showToast('✅ تم إرسال البيانات وإضافة الأصل بنجاح إلى الإكسل!', 'success');
-            addAssetModal.hide();
-            resetForm();
-            setTimeout(fetchData, 2000);
-        })
-        .catch(err => {
-            showToast('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً.', 'danger');
-        })
-        .finally(() => {
-            saveBtn.disabled = false;
-            saveBtn.textContent = '💾 حفظ الأصل';
-        });
+    const form = document.getElementById('addAssetForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
     }
+
+    const saveBtn = document.getElementById('saveAssetBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ جاري الحفظ...';
+
+    // تجميع عناصر النموذج في كائن JSON
+    const formData = new FormData(form);
+    const dataObj = {};
+    formData.forEach((value, key) => {
+        dataObj[key] = value;
+    });
+
+    // إرسال البيانات بأسلوب JSON يضمن وصول كافة الأعمدة
+    fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(dataObj)
+    })
+    .then(() => {
+        showToast('✅ تم إضافة الأصل بنجاح وتعبئة جميع الحقول!', 'success');
+        addAssetModal.hide();
+        resetForm();
+        setTimeout(fetchData, 2000);
+    })
+    .catch(err => {
+        showToast('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً.', 'danger');
+    })
+    .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 حفظ الأصل';
+    });
+}
 
     function showToast(message, type = 'info') {
         const existingToast = document.querySelector('.custom-toast');
