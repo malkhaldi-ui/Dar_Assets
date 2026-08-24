@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام جرد الأصول - منظمة دار للسلام والازدهار</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Html5-QRCode -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root {
@@ -137,7 +139,7 @@
                     <form id="addAssetForm">
                         <div class="mb-3">
                             <label for="assetCategory" class="form-label">الوصف العام / Category *</label>
-                            <input type="text" class="form-control" id="assetCategory" name="category" placeholder="مثال: أجهزة كمبيوتر" required>
+                            <input type="text" class="form-control" id="assetCategory" name="category" placeholder="مثال: إلكترونيات / أثاث" required>
                         </div>
                         
                         <div class="mb-3">
@@ -180,7 +182,7 @@
                         
                         <div class="mb-3">
                             <label for="assetLocation" class="form-label">الموقع / Location</label>
-                            <input type="text" class="form-control" id="assetLocation" name="location" placeholder="الموقع">
+                            <input type="text" class="form-control" id="assetLocation" name="location" placeholder="سوريا / تركيا / فرنسا ...">
                         </div>
                         
                         <div class="mb-3">
@@ -202,11 +204,11 @@
                         </div>
                         
                         <hr>
-                        <h6 class="mb-3" style="color: var(--dar-teal-dark);">معلومات الشراء</h6>
+                        <h6 class="mb-3" style="color: var(--dar-teal-dark);">معلومات الشراء والداعم</h6>
                         
                         <div class="mb-3">
                             <label for="assetDonor" class="form-label">الداعم / Donor</label>
-                            <input type="text" class="form-control" id="assetDonor" name="donor" placeholder="اسم الداعم">
+                            <input type="text" class="form-control" id="assetDonor" name="donor" placeholder="اسم المنظمة / الداعم">
                         </div>
                         
                         <div class="mb-3">
@@ -245,7 +247,7 @@
     </div>
 
     <footer class="mt-auto">
-        <div>الإصدار: <strong>v3.5.0</strong></div>
+        <div>الإصدار: <strong>v3.6.0</strong></div>
         <div>تم التصميم والتطوير بواسطة: <strong>قسم المراقبة والتقييم - Mhedy</strong></div>
     </footer>
 
@@ -293,50 +295,43 @@
     }
 
     function saveAssetDirectly() {
-    const form = document.getElementById('addAssetForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
+        const form = document.getElementById('addAssetForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const saveBtn = document.getElementById('saveAssetBtn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ جاري الحفظ...';
+
+        const formData = new FormData(form);
+        const searchParams = new URLSearchParams();
+
+        for (const pair of formData.entries()) {
+            searchParams.append(pair[0], pair[1]);
+        }
+
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: searchParams.toString()
+        })
+        .then(() => {
+            showToast('✅ تم إرسال البيانات وإضافة الأصل بنجاح إلى الإكسل!', 'success');
+            addAssetModal.hide();
+            resetForm();
+            setTimeout(fetchData, 2000);
+        })
+        .catch(err => {
+            showToast('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً.', 'danger');
+        })
+        .finally(() => {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 حفظ الأصل';
+        });
     }
-
-    const saveBtn = document.getElementById('saveAssetBtn');
-    saveBtn.disabled = true;
-    saveBtn.textContent = '⏳ جاري الحفظ...';
-
-    const formData = new FormData(form);
-    const searchParams = new URLSearchParams();
-
-    for (const pair of formData.entries()) {
-        searchParams.append(pair[0], pair[1]);
-    }
-
-    // إرسال البيانات بوضع no-cors لتجاوز حظر المتصفحات
-    fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors', // 👈 هذا الخيار هو السحر الذي يحل مشكلة الحظر تماماً
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: searchParams.toString()
-    })
-    .then(() => {
-        // في وضع no-cors ينفذ الطلب بنجاح ويحفظ في Google Sheets
-        showToast('✅ تم إضافة الأصل بنجاح إلى ملف Google Sheets!', 'success');
-        addAssetModal.hide();
-        resetForm();
-        
-        // إعادة تحميل البيانات بعد ثانيتين لتظهر القطعة الجديدة في الجرد
-        setTimeout(fetchData, 2000);
-    })
-    .catch(err => {
-        console.error('Error:', err);
-        showToast('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً.', 'danger');
-    })
-    .finally(() => {
-        saveBtn.disabled = false;
-        saveBtn.textContent = '💾 حفظ الأصل';
-    });
-}
 
     function showToast(message, type = 'info') {
         const existingToast = document.querySelector('.custom-toast');
@@ -382,6 +377,7 @@
         startScanner();
     }
 
+    // عرض تفاصيل الأصل عند مسحه بدون إظهار أسرار الباركود والكود
     function findAndDisplayAsset(scannedCode) {
         const cleanScanned = String(scannedCode).replace(/[*]/g, '').trim().toUpperCase();
 
@@ -398,17 +394,26 @@
             const conditionText = String(asset['الحالة عند الفحص / Condition'] || '-').trim();
             const statusStyle = getStatusBadge(conditionText);
 
+            // جلب تاريخ الشراء وتنسيقه إذا وجد
+            let purchaseDateFormatted = asset['تاريخ الشراء / Purchase Date'] || '-';
+            if (purchaseDateFormatted !== '-' && purchaseDateFormatted.includes('T')) {
+                purchaseDateFormatted = purchaseDateFormatted.split('T')[0];
+            }
+
             detailsDiv.innerHTML = `
                 <table class="table table-bordered table-custom text-right mt-2 mb-0">
                     <tr><th>اسم القطعة / الوصف:</th><td><strong>${asset['الوصف / Description'] || '-'}</strong></td></tr>
                     <tr><th>الوصف العام:</th><td>${asset['الوصف العام / Category'] || '-'}</td></tr>
                     <tr><th>حالة القطعة:</th><td><span class="status-pill ${statusStyle.class}">${statusStyle.emoji} ${conditionText}</span></td></tr>
+                    <tr><th>العدد:</th><td>${asset['العدد / Quantity'] || '1'}</td></tr>
                     <tr><th>المصنع / Brand:</th><td>${asset['المصنع / Manufacturer / Brand'] || '-'}</td></tr>
                     <tr><th>الموديل:</th><td>${asset['الموديل / Model'] || '-'}</td></tr>
                     <tr><th>الرقم التسلسلي:</th><td>${asset['الرقم التسلسلي / Serial Number'] || '-'}</td></tr>
                     <tr><th>الموقع والمكتب:</th><td>${asset['الموقع / Location'] || ''} - ${asset['مكتب / Office'] || ''}</td></tr>
                     <tr><th>الاسم / المستلم:</th><td>${asset['الاسم / Name'] || '-'} (${asset['القسم / department'] || ''})</td></tr>
                     <tr><th>الداعم / Donor:</th><td>${asset['الداعم / Donor'] || '-'}</td></tr>
+                    <tr><th>تاريخ الشراء:</th><td>${purchaseDateFormatted}</td></tr>
+                    <tr><th>سعر الشراء:</th><td>${asset['سعر الشراء / Purchase Price'] ? asset['سعر الشراء / Purchase Price'] + ' ' + (asset['العملة / Currency'] || '') : '-'}</td></tr>
                     <tr><th>ملاحظات:</th><td>${asset['ملاحظات / Comments'] || '-'}</td></tr>
                 </table>
             `;
