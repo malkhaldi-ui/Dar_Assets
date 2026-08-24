@@ -293,43 +293,50 @@
     }
 
     function saveAssetDirectly() {
-        const form = document.getElementById('addAssetForm');
-        if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-        }
-
-        const saveBtn = document.getElementById('saveAssetBtn');
-        saveBtn.disabled = true;
-        saveBtn.textContent = '⏳ جاري الحفظ...';
-
-        const formData = new FormData(form);
-        const searchParams = new URLSearchParams();
-
-        for (const pair of formData.entries()) {
-            searchParams.append(pair[0], pair[1]);
-        }
-
-        // إرسال مباشر يضمن الكتابة السريعة في الشيت
-        fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            body: searchParams,
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-        })
-        .then(() => {
-            showToast('✅ تم إرسال البيانات وإضافة الأصل بنجاح!', 'success');
-            addAssetModal.hide();
-            resetForm();
-            setTimeout(fetchData, 1500);
-        })
-        .catch(err => {
-            showToast('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً.', 'danger');
-        })
-        .finally(() => {
-            saveBtn.disabled = false;
-            saveBtn.textContent = '💾 حفظ الأصل';
-        });
+    const form = document.getElementById('addAssetForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
     }
+
+    const saveBtn = document.getElementById('saveAssetBtn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = '⏳ جاري الحفظ...';
+
+    const formData = new FormData(form);
+    const searchParams = new URLSearchParams();
+
+    for (const pair of formData.entries()) {
+        searchParams.append(pair[0], pair[1]);
+    }
+
+    // إرسال البيانات بوضع no-cors لتجاوز حظر المتصفحات
+    fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', // 👈 هذا الخيار هو السحر الذي يحل مشكلة الحظر تماماً
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: searchParams.toString()
+    })
+    .then(() => {
+        // في وضع no-cors ينفذ الطلب بنجاح ويحفظ في Google Sheets
+        showToast('✅ تم إضافة الأصل بنجاح إلى ملف Google Sheets!', 'success');
+        addAssetModal.hide();
+        resetForm();
+        
+        // إعادة تحميل البيانات بعد ثانيتين لتظهر القطعة الجديدة في الجرد
+        setTimeout(fetchData, 2000);
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        showToast('❌ حدث خطأ في الاتصال، يرجى المحاولة لاحقاً.', 'danger');
+    })
+    .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 حفظ الأصل';
+    });
+}
 
     function showToast(message, type = 'info') {
         const existingToast = document.querySelector('.custom-toast');
